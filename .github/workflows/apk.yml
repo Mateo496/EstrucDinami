@@ -1,0 +1,51 @@
+name: Compilar APK de EstrucDinami
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Compilar el APK firmado
+        working-directory: android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Renombrar el APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk EstrucDinami.apk
+
+      - name: Guardar el APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: EstrucDinami.apk
+          path: EstrucDinami.apk
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: EstrucDinami v1.0.${{ github.run_number }}
+          make_latest: true
+          files: EstrucDinami.apk
+          body: |
+            Descarga **EstrucDinami.apk** desde el celular Android y ábrelo para instalarlo.
+            Si Android lo pide, permite «Instalar apps desconocidas» para el navegador o el gestor de archivos.
